@@ -107,7 +107,7 @@ class AsaasRequest:
                         res_json = res.json()
                         data.extend(res_json.get("data"))
 
-                        if res_json.get("hasMore") == False:
+                        if not res_json.get("hasMore"):
                             break
 
                         offset += self.DEFAULT_PAGE_LIMIT
