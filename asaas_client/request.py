@@ -9,6 +9,7 @@ class AsaasRequest:
     """
 
     METHODS = {"delete", "get", "patch", "post", "put"}
+    DEFAULT_PAGE_LIMIT = 20
 
     def __init__(self, base_url: str, headers: Dict, *args):
         """
@@ -81,6 +82,39 @@ class AsaasRequest:
                 )
 
             return make_request
+
+        elif resource == "paginated":
+
+            def make_request_paginated(query_params={}, headers=None):
+                if headers:
+                    self._update_headers(headers)
+
+                query_params["limit"] = self.DEFAULT_PAGE_LIMIT
+
+                offset = 0
+                data = []
+
+                with self.client as client:
+                    while True:
+                        query_params["offset"] = offset
+
+                        res = client.get(
+                            url=self._build_url(),
+                            headers=self.headers,
+                            params=query_params.copy(),
+                        )
+
+                        res_json = res.json()
+                        data.extend(res_json.get("data"))
+
+                        if not res_json.get("hasMore"):
+                            break
+
+                        offset += self.DEFAULT_PAGE_LIMIT
+
+                return data
+
+            return make_request_paginated
 
         else:
             return self._(resource)
