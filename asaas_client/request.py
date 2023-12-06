@@ -28,6 +28,8 @@ class AsaasRequest:
         self._url_path = [base_url]
         self._url_path.extend(self.args)
 
+        self.client = httpx.Client(headers=headers)
+
     def _build_url(self) -> str:
         """
         Build the final URL for the request.
@@ -71,7 +73,7 @@ class AsaasRequest:
                 if headers:
                     self._update_headers(headers)
 
-                return httpx.Client(headers=self.headers).request(
+                return self.client.request(
                     method=resource,
                     url=self._build_url(),
                     data=body,
@@ -83,7 +85,7 @@ class AsaasRequest:
 
         elif resource == "paginated":
 
-            def make_request_paginated(query_params=None, headers=None):
+            def make_request_paginated(query_params={}, headers=None):
                 if headers:
                     self._update_headers(headers)
 
@@ -92,14 +94,14 @@ class AsaasRequest:
                 offset = 0
                 data = []
 
-                with httpx.Client(headers=self.headers) as client:
+                with self.client as client:
                     while True:
                         query_params["offset"] = offset
 
                         res = client.get(
                             url=self._build_url(),
                             headers=self.headers,
-                            params=query_params,
+                            params=query_params.copy(),
                         )
 
                         res_json = res.json()
